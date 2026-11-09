@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NKT Music Player</title>
+<style>
+:root{color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--gold:#e0b86d;--cream:#ffe0aa;--soft:#b89b6d}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:linear-gradient(160deg,#24170d 0%,#3b2816 25%,#121212 70%,#090909 100%);color:#f0d7a2;font-family:Georgia,'Times New Roman',serif}
+.p{padding:18px;max-width:600px;margin:0 auto;text-align:center}
+.hd{font-size:16px;letter-spacing:4px;color:var(--gold);text-shadow:0 0 10px rgba(224,184,109,.4);margin-bottom:12px}
+.now{font-size:22px;font-weight:bold;color:var(--cream);line-height:1.25;min-height:28px}
+.sub{font-size:12px;letter-spacing:2px;color:var(--soft);margin:6px 0 12px}
+.eq{display:flex;justify-content:center;align-items:flex-end;gap:4px;height:22px;margin-bottom:12px}
+.eq i{width:5px;height:6px;border-radius:3px;background:linear-gradient(#fff0c7,#b8863b);opacity:.8}
+.playing .eq i{animation:b .9s ease-in-out infinite}
+@keyframes b{0%,100%{height:5px}50%{height:22px}}
+.eq i:nth-child(2n){animation-delay:.2s!important}.eq i:nth-child(3n){animation-delay:.4s!important}
+input[type=range]{width:100%;accent-color:#e0b86d;margin:4px 0}
+.time{display:flex;justify-content:space-between;font-size:11px;color:var(--soft);letter-spacing:1px}
+.ctl{display:flex;justify-content:center;gap:8px;margin:12px 0}
+button{font:inherit;cursor:pointer;color:var(--cream);background:linear-gradient(145deg,#5d3d20,#1a120c);border:1px solid rgba(224,184,109,.35);border-radius:999px;box-shadow:inset 0 1px 2px rgba(255,255,255,.06),0 4px 10px rgba(0,0,0,.5);min-width:46px;height:44px;font-size:17px}
+button.big{min-width:64px;font-size:20px}
+button.on{border-color:#e0b86d;color:#24170d;background:linear-gradient(145deg,#e0b86d,#8a5a2b)}
+ol{list-style:none;margin:0;padding:0;max-height:300px;overflow-y:auto}
+li{display:flex;align-items:center;gap:10px;margin:7px 0;padding:10px 14px;border-radius:999px;text-align:left;cursor:pointer;background:linear-gradient(145deg,#5d3d20,#1a120c);border:1px solid rgba(224,184,109,.3)}
+li.cur{border-color:#e0b86d;background:linear-gradient(145deg,#7a5128,#2a1a0d)}
+li b{font-size:11px;color:var(--soft);min-width:22px}
+li span{flex:1;font-size:14px;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+li em{font-style:normal;font-size:10px;letter-spacing:1px;color:var(--gold)}
+.ft{margin-top:12px;font-size:8px;letter-spacing:3px;color:rgba(240,215,162,.6)}
+</style>
+</head>
+<body>
+<div class="p" id="p">
+  <div class="hd">♫ NKT MUSIC PLAYER ♫</div>
+  <div class="now" id="now"></div>
+  <div class="sub" id="cnt"></div>
+  <div class="eq" id="eq"></div>
+  <input type="range" id="seek" min="0" max="1000" value="0" aria-label="Seek">
+  <div class="time"><span id="cur">0:00</span><span id="dur">0:00</span></div>
+  <div class="ctl">
+    <button id="prev" title="Previous song">⏮</button>
+    <button id="rst" title="Play from start">↺</button>
+    <button id="pp" class="big" title="Play / Pause">▶</button>
+    <button id="next" title="Next song">⏭</button>
+    <button id="lp" title="Loop: off">🔁</button>
+  </div>
+  <ol id="list"></ol>
+  <div class="ft">NEXUS &bull; KNOWLEDGE &bull; TRIUMPH</div>
+</div>
+<audio id="a" preload="none"></audio>
+<script>
+/* ✏️ EDIT YOUR SONGS HERE: t = title shown, s = the mp3 file name */
+var T=[
+ {t:"Bamboo Dreams",s:"song1.mp3"},
+ {t:"In The Rain",s:"song2.mp3"},
+ {t:"Sarabande",s:"song3.mp3"},
+ {t:"Escape",s:"song4.mp3"},
+ {t:"Lost At Sea",s:"song5.mp3"}
+];
+var $=function(i){return document.getElementById(i)},a=$("a"),i=0,loop=0,modes=["off","all songs","this song"];
+for(var k=0;k<12;k++)$("eq").appendChild(document.createElement("i"));
+function fmt(x){if(!isFinite(x))return"0:00";var m=Math.floor(x/60),s=Math.floor(x%60);return m+":"+(s<10?"0":"")+s}
+function draw(){
+  var h="";T.forEach(function(x,n){h+='<li data-n="'+n+'" class="'+(n===i?"cur":"")+'"><b>'+(n<9?"0":"")+(n+1)+'</b><span>'+x.t+'</span><em>'+(n===i?(a.paused?"PAUSED":"NOW PLAYING"):"PLAY")+'</em></li>'});
+  $("list").innerHTML=h;$("now").textContent=T[i].t;$("cnt").textContent="TRACK "+(i+1)+" OF "+T.length;
+  $("pp").textContent=a.paused?"▶":"⏸";$("p").className="p"+(a.paused?"":" playing");
+}
+function load(n,go){i=(n+T.length)%T.length;a.src=T[i].s;a.loop=(loop===2);if(go)a.play();draw()}
+function toggle(){if(!a.src)load(i,true);else if(a.paused)a.play();else a.pause()}
+$("pp").onclick=toggle;
+$("next").onclick=function(){load(i+1,true)};
+$("prev").onclick=function(){if(a.currentTime>3){a.currentTime=0}else{load(i-1,true)}};
+$("rst").onclick=function(){if(!a.src)load(i,true);else{a.currentTime=0;a.play()}};
+$("lp").onclick=function(){loop=(loop+1)%3;a.loop=(loop===2);this.className=loop?"on":"";this.title="Loop: "+modes[loop];this.textContent=loop===2?"🔂":"🔁"};
+$("list").onclick=function(e){var li=e.target.closest("li");if(!li)return;var n=+li.getAttribute("data-n");if(n===i&&a.src){toggle()}else{load(n,true)}};
+$("seek").oninput=function(){if(a.duration)a.currentTime=a.duration*this.value/1000};
+a.ontimeupdate=function(){$("cur").textContent=fmt(a.currentTime);$("dur").textContent=fmt(a.duration);if(a.duration)$("seek").value=a.currentTime/a.duration*1000};
+a.onplay=a.onpause=draw;
+a.onended=function(){if(i<T.length-1||loop===1)load(i+1,true);else draw()};
+a.onerror=function(){if(a.src)$("cnt").textContent="COULD NOT LOAD THIS SONG"};
+draw();
+</script>
+</body>
+</html>
